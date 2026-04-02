@@ -1,6 +1,7 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <div id="game-container" style="background: #010101; color: #00ff41; font-family: 'Courier New', monospace; width: 98vw; max-width: 1400px; margin: auto; border: 3px solid #00ff41; padding: 15px; position: relative; overflow: hidden; touch-action: none; user-select: none; border-radius: 15px; box-shadow: 0 0 50px rgba(0,255,65,0.3);">
     
-    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 20px; margin-bottom: 10px; text-shadow: 0 0 10px #00ff41;">
+    <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 22px; margin-bottom: 10px; text-shadow: 0 0 10px #00ff41;">
         <span>СЧЕТ: <span id="scr">0</span></span>
         <span>ЩИТ: <span id="sh-stat" style="color: #0044ff;">ВЫКЛ</span></span>
         <span>HP: <span id="hp" style="color: #ff003c;">3</span></span>
@@ -13,10 +14,6 @@
     <div style="position: relative; width: 100%; padding-top: 50%;">
         <canvas id="game" width="1400" height="700" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #050505; border: 1px solid #222; border-radius: 10px;"></canvas>
         
-        <div id="joy-base" style="display: none; position: absolute; width: 120px; height: 120px; background: rgba(0,255,65,0.1); border: 2px solid rgba(0,255,65,0.3); border-radius: 50%; pointer-events: none; z-index: 10;">
-            <div id="joy-stick" style="position: absolute; width: 50px; height: 50px; background: #00ff41; border-radius: 50%; top: 35px; left: 35px; box-shadow: 0 0 15px #00ff41;"></div>
-        </div>
-
         <div id="mg-ui" style="display: none; position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); width: 300px; background: rgba(0,20,0,0.95); border: 3px solid #00ff41; padding: 25px; text-align: center; z-index: 100; border-radius: 10px; box-shadow: 0 0 40px #00ff41;">
             <div id="mg-label" style="font-size: 18px; margin-bottom: 15px; color: #fff; font-weight: bold;">СИНХРОНИЗАЦИЯ...</div>
             <div style="width: 100%; height: 25px; background: #000; position: relative; border-radius: 5px; border: 1px solid #00ff41; overflow: hidden;">
@@ -32,69 +29,53 @@
     </div>
 
     <div id="controls" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 15px;">
-        <button class="btn" onpointerdown="handleAction('Y')" style="background: #0044ff; color: white; padding: 15px 5px; border: none; border-radius: 5px; font-weight: bold;">ПРИНЯТЬ (Y)</button>
-        <button class="btn" onpointerdown="handleAction('N')" style="background: #ff003c; color: white; padding: 15px 5px; border: none; border-radius: 5px; font-weight: bold;">ОТКЛОНИТЬ (N)</button>
-        <button class="btn" onpointerdown="handleAction('B')" style="background: #774400; color: white; padding: 15px 5px; border: none; border-radius: 5px; font-weight: bold;">УЛУЧШИТЬ (B)</button>
-        <button class="btn" onpointerdown="handleAction('H')" style="background: #006622; color: white; padding: 15px 5px; border: none; border-radius: 5px; font-weight: bold;">ЛЕЧИТЬ (H)</button>
-        <button class="btn" onpointerdown="handleAction('F')" style="background: #002266; color: #00ff41; border: 1px solid #00ff41; padding: 15px 5px; border-radius: 5px; font-weight: bold;">ЩИТ (F)</button>
+        <button class="btn" onpointerdown="handleAction('Y')" style="background: #0044ff; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">ПРИНЯТЬ (Y)</button>
+        <button class="btn" onpointerdown="handleAction('N')" style="background: #ff003c; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">ОТКЛОНИТЬ (N)</button>
+        <button class="btn" onpointerdown="handleAction('B')" style="background: #774400; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">УЛУЧШИТЬ (B)</button>
+        <button class="btn" onpointerdown="handleAction('H')" style="background: #006622; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">ЛЕЧИТЬ (H)</button>
+        <button class="btn" onpointerdown="handleAction('F')" style="background: #002266; color: #00ff41; border: 1px solid #00ff41; padding: 10px; border-radius: 5px; cursor: pointer;">ЩИТ (F)</button>
     </div>
 </div>
 
 <script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-const joyBase = document.getElementById('joy-base');
-const joyStick = document.getElementById('joy-stick');
 
 let score, hp, av_lvl, currentReq, activeReq = null, gameOver, time, maxTime = 60, hasShield = false;
 let mgActive = false, mgPos = 0, mgDir = 1, mgTarget = 120, mgKey = '';
 let scanResult = "АНАЛИЗ...", commsMsg = "СИСТЕМА ГОТОВА", commsTimer = 0, flash = 0;
 
-const player = { x: 700, y: 350, s: 45, speed: 8, dx: 0, dy: 0 };
+const player = { x: 700, y: 350, s: 45, speed: 8 };
 const termL = { x: 150, y: 280, s: 120 }; 
 const termR = { x: 1130, y: 280, s: 120 }; 
 
-let joyActive = false, joyStartPos = { x: 0, y: 0 };
-const maxJoyDist = 40;
+const cyberTips = [
+    "СОВЕТ: googIe.com (с большой I) — это фишинг!",
+    "ВАЖНО: Щит защищает от одного любого урона.",
+    "ВНИМАНИЕ: .exe файлы из почты — риск 99%.",
+    "СОВЕТ: Регулярно обновляй систему (B).",
+    "ИНФО: Банки не просят пароль в SMS."
+];
 
-const cyberTips = ["СОВЕТ: googIe.com — это фишинг!", "ВАЖНО: Щит спасает жизнь.", "ВНИМАНИЕ: .exe в почте опасны.", "СОВЕТ: Улучшай уровень системы.", "ИНФО: Банки не шлют пароли в SMS."];
-const urls = [{u: "google.com", b: false}, {u: "gift.exe", b: true}, {u: "paypaI.com", b: true}, {u: "github.com", b: false}, {u: "googIe.com", b: true}, {u: "bank.net", b: true}, {u: "vk.com", b: false}];
+const urls = [
+    {u: "google.com", b: false}, {u: "free-gift.exe", b: true},
+    {u: "paypaI.com", b: true}, {u: "github.com", b: false},
+    {u: "googIe.com", b: true}, {u: "youtube.com", b: false},
+    {u: "bank-secure.net", b: true}, {u: "vk.com", b: false},
+    {u: "steam-comunitty.ru", b: true}, {u: "wikipedia.org", b: false}
+];
 
 function resetGame() {
     score = 0; hp = 3; av_lvl = 1; gameOver = false; time = maxTime; hasShield = false;
-    player.x = 700; player.y = 350; player.dx = 0; player.dy = 0;
-    currentReq = null; activeReq = null; mgActive = false;
+    player.x = 700; player.y = 350; currentReq = null; activeReq = null; mgActive = false;
     document.getElementById('death').style.display = 'none';
     requestAnimationFrame(gameLoop);
 }
 
-canvas.addEventListener('pointerdown', (e) => {
-    if (mgActive || gameOver) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    joyActive = true; joyStartPos = { x: e.clientX, y: e.clientY };
-    joyBase.style.display = 'block'; joyBase.style.left = (x - 60) + 'px'; joyBase.style.top = (y - 60) + 'px';
-});
-
-window.addEventListener('pointermove', (e) => {
-    if (!joyActive) return;
-    const dx = e.clientX - joyStartPos.x;
-    const dy = e.clientY - joyStartPos.y;
-    const dist = Math.min(Math.hypot(dx, dy), maxJoyDist);
-    const angle = Math.atan2(dy, dx);
-    const moveX = Math.cos(angle) * dist;
-    const moveY = Math.sin(angle) * dist;
-    joyStick.style.transform = `translate(${moveX}px, ${moveY}px)`;
-    player.dx = (moveX / maxJoyDist) * player.speed;
-    player.dy = (moveY / maxJoyDist) * player.speed;
-});
-
-window.addEventListener('pointerup', () => { joyActive = false; joyBase.style.display = 'none'; player.dx = 0; player.dy = 0; });
-
 function handleAction(type) {
     if (gameOver) return;
     if (mgActive && type === mgKey) { confirmMG(); return; }
+    
     const dL = Math.hypot(player.x - termL.x, player.y - termL.y);
     const dR = Math.hypot(player.x - termR.x, player.y - termR.y);
 
@@ -112,11 +93,19 @@ function handleAction(type) {
 
 function confirmMG() {
     const hit = mgPos >= mgTarget && mgPos <= mgTarget + 60;
-    mgActive = false; document.getElementById('mg-ui').style.display = 'none';
-    let correct = (mgKey === 'Y' && !activeReq.b) || (mgKey === 'N' && activeReq.b);
-    if (hit && correct) { score += 50; time = Math.min(maxTime, time + 15); } 
-    else { if (hasShield) hasShield = false; else { hp--; score = Math.max(0, score - 50); flash = 15; } }
-    currentReq = null; player.x += 160;
+    mgActive = false; 
+    document.getElementById('mg-ui').style.display = 'none';
+    
+    let correctDecision = (mgKey === 'Y' && !activeReq.b) || (mgKey === 'N' && activeReq.b);
+    
+    if (hit && correctDecision) { 
+        score += 50; 
+        time = Math.min(maxTime, time + 15); 
+    } else { 
+        if (hasShield) { hasShield = false; } 
+        else { hp--; score = Math.max(0, score - 50); flash = 10; } 
+    }
+    currentReq = null; activeReq = null; player.x += 160;
 }
 
 window.onkeydown = (e) => {
@@ -131,20 +120,23 @@ function update() {
     if (gameOver) return;
     time -= 0.016; flash > 0 ? flash-- : 0;
     if (time <= 0 || hp <= 0) { gameOver = true; document.getElementById('death').style.display = 'flex'; }
-    if (Date.now() > commsTimer) { commsMsg = cyberTips[Math.floor(Math.random()*cyberTips.length)]; commsTimer = Date.now() + 6000; }
+    
+    if (Date.now() > commsTimer) {
+        commsMsg = cyberTips[Math.floor(Math.random()*cyberTips.length)];
+        commsTimer = Date.now() + 6000;
+    }
 
     if (mgActive) {
         mgPos += (5 + (score / 400)) * mgDir;
         if (mgPos > 235 || mgPos < 0) mgDir *= -1;
         document.getElementById('mg-slider').style.left = mgPos + 'px';
     } else {
-        let kx = 0, ky = 0;
-        if (keys['ArrowLeft'] || keys['KeyA']) kx = -player.speed;
-        if (keys['ArrowRight'] || keys['KeyD']) kx = player.speed;
-        if (keys['ArrowUp'] || keys['KeyW']) ky = -player.speed;
-        if (keys['ArrowDown'] || keys['KeyS']) ky = player.speed;
-        player.x += kx || player.dx; player.y += ky || player.dy;
-        player.x = Math.max(0, Math.min(1350, player.x)); player.y = Math.max(0, Math.min(650, player.y));
+        if (keys['ArrowLeft'] || keys['KeyA']) player.x -= player.speed;
+        if (keys['ArrowRight'] || keys['KeyD']) player.x += player.speed;
+        if (keys['ArrowUp'] || keys['KeyW']) player.y -= player.speed;
+        if (keys['ArrowDown'] || keys['KeyS']) player.y += player.speed;
+        player.x = Math.max(0, Math.min(1350, player.x));
+        player.y = Math.max(0, Math.min(650, player.y));
     }
     
     if (Math.hypot(player.x - termL.x, player.y - termL.y) < 150) {
@@ -163,48 +155,80 @@ function update() {
 
 function draw() {
     ctx.fillStyle = "#050505"; ctx.fillRect(0, 0, 1400, 700);
+    
+    // Сетка
     ctx.strokeStyle = "rgba(0, 255, 65, 0.05)";
     for(let i=0; i<1400; i+=70) ctx.strokeRect(i,0,70,700);
 
-    // АНАЛИЗАТОР
-    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(termL.x, termL.y, termL.s, termL.s);
-    ctx.strokeStyle = "#00ff41"; ctx.lineWidth = 2; ctx.strokeRect(termL.x, termL.y, termL.s, termL.s);
-    ctx.fillStyle = "#001100"; ctx.fillRect(termL.x+10, termL.y+10, termL.s-20, termL.s/2);
+    // --- ДАТА-ЦЕНТР (АНАЛИЗАТОР) ---
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(termL.x, termL.y, termL.s, termL.s);
+    ctx.strokeStyle = "#00ff41"; ctx.lineWidth = 2;
+    ctx.strokeRect(termL.x, termL.y, termL.s, termL.s);
+    // Экран
+    ctx.fillStyle = "#001100";
+    ctx.fillRect(termL.x + 10, termL.y + 10, termL.s - 20, termL.s/2);
+    ctx.strokeStyle = "#003300";
+    ctx.strokeRect(termL.x + 10, termL.y + 10, termL.s - 20, termL.s/2);
+    // Лампочки
     for(let i=0; i<3; i++) {
         ctx.fillStyle = (Math.sin(Date.now()/150 + i) > 0) ? "#00ff41" : "#003300";
-        ctx.beginPath(); ctx.arc(termL.x+25+(i*25), termL.y+85, 4, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(termL.x + 25 + (i*25), termL.y + 85, 4, 0, Math.PI*2); ctx.fill();
     }
-    ctx.fillStyle = "#00ff41"; ctx.font = "bold 16px Courier New"; ctx.fillText("АНАЛИЗАТОР", termL.x, termL.y - 10);
+    ctx.fillStyle = "#00ff41"; ctx.font = "bold 16px Courier New";
+    ctx.fillText("SCANNER", termL.x, termL.y - 10);
+    
     if (currentReq) {
         ctx.fillStyle = "#fff"; ctx.font = "14px Courier New";
-        ctx.fillText("URL: " + currentReq.u, termL.x-20, termL.y+150);
-        ctx.fillStyle = scanResult === "ОПАСНО" ? "#ff003c" : "#00ff41";
-        ctx.fillText("СКАН: " + scanResult, termL.x-20, termL.y+170);
+        ctx.fillText("URL: " + currentReq.u, termL.x - 20, termL.y + 150);
+        ctx.fillStyle = scanResult === "ОПАСНО" ? "#ff003c" : (scanResult === "???" ? "#777" : "#00ff41");
+        ctx.fillText("СКАН: " + scanResult, termL.x - 20, termL.y + 170);
     }
 
-    // МАГАЗИН
-    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(termR.x, termR.y, termR.s, termR.s);
-    ctx.strokeStyle = "#774400"; ctx.strokeRect(termR.x, termR.y, termR.s, termR.s);
-    ctx.strokeStyle = "#333"; for(let i=15; i<termR.s-15; i+=10) { ctx.beginPath(); ctx.moveTo(termR.x+15, termR.y+i); ctx.lineTo(termR.x+termR.s-15, termR.y+i); ctx.stroke(); }
-    ctx.fillStyle = "#774400"; ctx.font = "bold 16px Courier New"; ctx.fillText("МАГАЗИН", termR.x + 10, termR.y - 10);
+    // --- МАГАЗИН (UPGRADE CORE) ---
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(termR.x, termR.y, termR.s, termR.s);
+    ctx.strokeStyle = "#774400";
+    ctx.strokeRect(termR.x, termR.y, termR.s, termR.s);
+    // Решетка
+    ctx.strokeStyle = "#333"; ctx.lineWidth = 1;
+    for(let i=15; i<termR.s-15; i+=10) {
+        ctx.beginPath(); ctx.moveTo(termR.x + 15, termR.y + i); ctx.lineTo(termR.x + termR.s - 15, termR.y + i); ctx.stroke();
+    }
+    // Порты
+    ctx.fillStyle = "#774400";
+    ctx.fillRect(termR.x + termR.s - 12, termR.y + 20, 8, 30);
+    ctx.fillRect(termR.x + termR.s - 12, termR.y + 60, 8, 30);
+    
+    ctx.fillStyle = "#774400"; ctx.font = "bold 16px Courier New";
+    ctx.fillText("UPGRADE", termR.x + 10, termR.y - 10);
     ctx.fillStyle = "#fff"; ctx.font = "12px Courier New";
-    ctx.fillText(`F:ЩИТ (300)`, termR.x - 30, termR.y + 150);
-    ctx.fillText(`H:ЛЕЧЕНИЕ (200)`, termR.x - 30, termR.y + 170);
-    ctx.fillText(`B:LVL ${av_lvl+1} (${av_lvl*150})`, termR.x - 30, termR.y + 190);
+    ctx.fillText(`F:ЩИТ(300) H:HP(200)`, termR.x - 30, termR.y + 150);
+    ctx.fillText(`B:LVL ${av_lvl+1}(${av_lvl*150})`, termR.x - 30, termR.y + 170);
 
-    // Игрок
+    // Игрок и щит
     if (hasShield) {
-        ctx.beginPath(); ctx.arc(player.x+22, player.y+22, 50, 0, Math.PI*2);
+        ctx.beginPath(); ctx.arc(player.x + player.s/2, player.y + player.s/2, 50, 0, Math.PI*2);
         ctx.strokeStyle = "#0044ff"; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = "rgba(0, 68, 255, 0.1)"; ctx.fill();
     }
     ctx.fillStyle = "#00ff41"; ctx.shadowBlur = 15; ctx.shadowColor = "#00ff41";
     ctx.fillRect(player.x, player.y, player.s, player.s);
     ctx.shadowBlur = 0;
-    if (flash > 0) { ctx.fillStyle = `rgba(255,0,60,${flash/25})`; ctx.fillRect(0,0,1400,700); }
-    ctx.fillStyle = "rgba(0,255,65,0.8)"; ctx.font = "20px Courier New";
+
+    if (flash > 0) {
+        ctx.fillStyle = `rgba(255, 0, 60, ${flash/10 * 0.4})`;
+        ctx.fillRect(0,0,1400,700);
+    }
+    ctx.fillStyle = "rgba(0, 255, 65, 0.8)"; ctx.font = "20px Courier New";
     ctx.fillText(">> " + commsMsg, 50, 670);
 }
 
-function gameLoop() { update(); draw(); if (!gameOver) requestAnimationFrame(gameLoop); }
+function gameLoop() {
+    update();
+    draw();
+    if (!gameOver) requestAnimationFrame(gameLoop);
+}
+
 resetGame();
 </script>
